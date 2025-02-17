@@ -93,22 +93,29 @@ resource "aws_vpc_security_group_ingress_rule" "ssh" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "http" {
+  security_group_id = aws_security_group.web.id
+  from_port         = 80
+  to_port           = 80
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+}
+
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.web.id
-  from_port         = 0
-  to_port           = 0
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
 }
 
 resource "aws_instance" "web" {
-  ami             = data.aws_ami.amazon_linux_2023.id
-  instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.public.id
-  security_groups = [aws_security_group.web.id]
-  private_ip      = "10.0.1.10"
-  ebs_optimized   = true
-  key_name        = "web"
+  ami                    = data.aws_ami.amazon_linux_2023.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web.id]
+  private_ip             = "10.0.1.10"
+  ebs_optimized          = true
+  key_name               = "web"
+  user_data              = file("user_data.sh")
 
   ebs_block_device {
     volume_size = 8
