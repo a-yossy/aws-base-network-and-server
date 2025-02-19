@@ -138,7 +138,6 @@ resource "aws_instance" "web" {
   user_data              = file("user_data.sh")
 
   ebs_block_device {
-    volume_size = 8
     device_name = "/dev/xvda"
   }
 
@@ -202,11 +201,38 @@ resource "aws_instance" "db" {
   ebs_optimized          = true
 
   ebs_block_device {
-    volume_size = 8
     device_name = "/dev/xvda"
   }
 
   tags = {
     "Name" = "db"
+  }
+}
+
+resource "aws_eip" "ngw" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.ngw.id
+  subnet_id     = aws_subnet.public.id
+
+  tags = {
+    "Name" = "main"
+  }
+
+  depends_on = [aws_internet_gateway.main]
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+
+  tags = {
+    "Name" = "private"
   }
 }
